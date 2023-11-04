@@ -2,30 +2,158 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>운세를 봐 드립니다! AI도령</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #0f0f0f;
+        color: #fff;
+      }
+      #chat-container {
+        width: 380px;
+        height: 600px;
+        background-color: #1c1c1c;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #2e2e2e;
+      }
+      #chat-box {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: linear-gradient(to bottom, #111111, #262626);
+      }
+      .chat-message {
+        margin-bottom: 10px;
+        padding: 10px 20px;
+        border-radius: 18px;
+        line-height: 1.4;
+        position: relative;
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      .user-message {
+        align-self: flex-end;
+        background-color: #4a4a4a;
+      }
+      .assistant-message {
+        align-self: flex-start;
+        background-color: #333333;
+      }
+      #chat-input {
+        padding: 10px;
+        background: #1e1e1e;
+        display: flex;
+      }
+      #chat-input input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #555;
+        background: #2b2b2b;
+        color: #fff;
+        margin-right: 10px;
+        border-radius: 4px;
+        outline: none;
+      }
+      #chat-input button {
+        padding: 10px 20px;
+        background-color: #5c5c5c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        outline: none;
+      }
+      #chat-input button:hover {
+        background-color: #757575;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
   </head>
   <body>
-    <h1></h1>
-    <button onclick="getFortune()">요청하기</button>
+    <div id="chat-container">
+      <div id="chat-box"></div>
+      <div id="chat-input">
+        <input
+          type="text"
+          id="userInput"
+          placeholder="메시지를 입력하세요..."
+        />
+        <button onclick="getFortune()">운세 보기</button>
+      </div>
+    </div>
     <script>
-      async function getFortune() {
-        try {
-          const response = await fetch("http://localhost:3000/fortune", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: "도령",
-            }),
-          });
-          const data = await response.json();
-          console.log(data);
-          return data;
-        } catch (err) {
-          console.log(err);
+      const chatBox = document.getElementById("chat-box");
+      const userInput = document.getElementById("userInput");
+
+      userInput.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          getFortune();
         }
+      });
+
+      async function getFortune() {
+        const name = userInput.value.trim();
+        if (name) {
+          // Display user's message in a speech bubble
+          addUserMessage(name);
+
+          try {
+            const response = await fetch("http://localhost:3000/fortune", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ name: name }),
+            });
+            const data = await response.json();
+
+            // Display the assistant's response in a speech bubble
+            if (data && data.assistant) {
+              addAssistantMessage(data.assistant);
+            } else {
+              // Handle the absence of an 'assistant' property
+              addAssistantMessage("I'm sorry, I couldn't find your fortune.");
+            }
+          } catch (err) {
+            console.error("Fetch error:", err);
+            addAssistantMessage("There was an error getting your fortune.");
+          }
+          userInput.value = ""; // Clear input field
+        }
+      }
+
+      function addUserMessage(message) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("chat-message", "user-message");
+        messageElement.textContent = message;
+        chatBox.appendChild(messageElement);
+        chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+      }
+
+      function addAssistantMessage(message) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("chat-message", "assistant-message");
+        messageElement.textContent = message;
+        chatBox.appendChild(messageElement);
+        chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
       }
     </script>
   </body>
