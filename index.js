@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import express from "express";
 import cors from "cors";
 import { config } from "dotenv";
+import ServerlessHttp from "serverless-http";
 config();
 
 console.log(process.env.OPENAI_API_KEY); // Log the API key
@@ -12,17 +13,17 @@ const openai = new OpenAI({
 });
 
 //CORS 설정
-// let corsOptions = {
-//   origin: "http://www.domain.com",
-//   credentials: true,
-// };
-app.use(cors());
+let corsOptions = {
+  origin: "https://gpt-fortune-chloe.pages.dev",
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 //POST 요청을 받기 위한 설정
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/fortune", async function (req, res) {
+app.post("/fortune", async function (req, res) {
   const completion = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
@@ -49,7 +50,8 @@ app.get("/fortune", async function (req, res) {
   let fortune = completion.choices[0].message["content"];
   console.log(fortune);
 
-  res.send(fortune);
+  res.json({ assistant: fortune });
 });
 
-app.listen(3000);
+module.exports.handler = ServerlessHttp(app);
+//app.listen(3000);
